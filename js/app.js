@@ -535,104 +535,6 @@ const RateLimit = {
   }
 };
 
-// ==================== WHATSAPP OTP ====================
-// Login/Registo por código de 6 dígitos via WhatsApp.
-// - Modo local: código gerado e verificado no navegador.
-//   Sem sender configurado, o código é exibido no ecrã (demo).
-// - Modo cloud: tenta a Edge Function `wa-otp` (ver
-//   supabase/functions/wa-otp/index.ts); sem ela, avisa.
-const WhatsAppOTP = {
-  CODE_TTL_MS: 5 * 60 * 1000,
-  CODE_LEN: 6,
-  STORE_KEY: 'gv_wa_codes',
-
-  digits(phone) {
-    return String(phone || '').replace(/\D/g, '');
-  },
-
-  senderReady() {
-    return typeof WHATSAPP_SENDER_ENABLED !== 'undefined' && WHATSAPP_SENDER_ENABLED;
-  },
-
-  loadStore() {
-    try { return JSON.parse(localStorage.getItem(this.STORE_KEY) || '{}'); }
-    catch (e) { return {}; }
-  },
-
-  saveStore(s) {
-    try { localStorage.setItem(this.STORE_KEY, JSON.stringify(s)); } catch (e) { /* quota */ }
-  },
-
-  // Gera código, guarda hash+expiração e envia (API real ou demo).
-  // Retorna { ok, demoCode? } — demoCode só existe em modo demo.
-  async request(phone) {
-    const digits = this.digits(phone);
-    if (!((digits.length === 9) || (digits.length === 12 && digits.startsWith('245')))) {
-      return { ok: false, error: 'Insira um número válido da Guiné-Bissau (ex.: +245 955 394 566).' };
-    }
-    if (!RateLimit.check('wa-req-' + digits, 3, 60000)) {
-      return { ok: false, error: 'Muitos pedidos. Aguarde 1 minuto antes de reenviar.' };
-    }
-    const code = String(Math.floor(100000 + Math.random() * 900000));
-    const store = this.loadStore();
-    store[digits] = {
-      hash: await hashPassword('wa-otp::' + code),
-      expires: Date.now() + this.CODE_TTL_MS,
-      attempts: 0
-    };
-    this.saveStore(store);
-
-    const sender = (typeof WHATSAPP_SENDER_NAME !== 'undefined' && WHATSAPP_SENDER_NAME) || 'GUINÉ-VENDAS';
-    const text = `${sender}: o seu código de entrada é ${code}. Válido por 5 minutos. Não partilhe este código.`;
-
-    if (this.senderReady()) {
-      try {
-        const res = await fetch(WHATSAPP_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': WHATSAPP_API_KEY },
-          body: JSON.stringify({ number: digits, text })
-        });
-        if (!res.ok) throw new Error('sender-' + res.status);
-        return { ok: true, demoCode: null };
-      } catch (e) {
-        return { ok: false, error: 'Falha ao enviar pelo WhatsApp. Verifique a configuração do sender e tente de novo.' };
-      }
-    }
-    // Modo demo: devolve o código para exibir no ecrã
-    try { console.log('[GUINÉ-VENDAS] Código WhatsApp (demo):', code); } catch (e) { /* ignore */ }
-    return { ok: true, demoCode: code };
-  },
-
-  async verify(phone, code) {
-    const digits = this.digits(phone);
-    code = String(code || '').replace(/\D/g, '');
-    if (code.length !== this.CODE_LEN) return { ok: false, error: 'O código tem 6 dígitos.' };
-    const store = this.loadStore();
-    const entry = store[digits];
-    if (!entry) return { ok: false, error: 'Peça um novo código primeiro.' };
-    if (Date.now() > entry.expires) {
-      delete store[digits];
-      this.saveStore(store);
-      return { ok: false, error: 'Código expirado. Peça um novo código.' };
-    }
-    entry.attempts = (entry.attempts || 0) + 1;
-    if (entry.attempts > 5) {
-      delete store[digits];
-      this.saveStore(store);
-      return { ok: false, error: 'Muitas tentativas. Peça um novo código.' };
-    }
-    const hash = await hashPassword('wa-otp::' + code);
-    const match = (hash === entry.hash) || (hash.replace(/^sha256\$/, '') === String(entry.hash).replace(/^sha256\$/, ''));
-    if (!match) {
-      this.saveStore(store);
-      return { ok: false, error: `Código incorreto (${entry.attempts}/5).` };
-    }
-    delete store[digits];
-    this.saveStore(store);
-    return { ok: true, phone: normalizePhone(phone) };
-  }
-};
-
 // Comprime imagem no navegador: máx. 1280px, JPEG 0.8. Evita estourar localStorage/DB com base64 gigante.
 function compressImageFile(file, maxDim = 1280, quality = 0.8) {
   return new Promise((resolve, reject) => {
@@ -753,8 +655,8 @@ const Router = {
   handleRoute() {
     const hash = window.location.hash || '#/';
 
-    // Retorno de magic link do Supabase (login via WhatsApp):
-    // #access_token=...&refresh_token=...&type=magiclink
+    // Retorno de OAuth/magic link do Supabase (Google, Facebook):
+    // #access_token=...&refresh_token=...
     if (hash.includes('access_token=') && hash.includes('refresh_token=')) {
       this.handleAuthCallback(hash);
       return;
@@ -1532,17 +1434,51 @@ const Pages = {
   },
 
   auth: {
-    switchTab(which) {
-      const emailPane = document.getElementById('auth-email-pane');
-      const waPane = document.getElementById('auth-wa-pane');
-      const tEmail = document.getElementById('auth-tab-email');
-      const tWa = document.getElementById('auth-tab-wa');
-      if (!emailPane || !waPane) return;
-      const isEmail = which === 'email';
-      emailPane.style.display = isEmail ? 'block' : 'none';
-      waPane.style.display = isEmail ? 'none' : 'block';
-      if (tEmail) tEmail.classList.toggle('active', isEmail);
-      if (tWa) tWa.classList.toggle('active', !isEmail);
+    // Descobre providers OAuth ativos (endpoint público do Supabase Auth)
+    _oauthCache: null,
+    async activeOAuthProviders() {
+      if (!AppData.isCloud) return [];
+      const now = Date.now();
+      if (this._oauthCache && now - this._oauthCache.at < 5 * 60 * 1000) return this._oauthCache.list;
+      try {
+        const base = SUPABASE_URL.replace(/\/$/, '');
+        const res = await fetch(base + '/auth/v1/settings', {
+          headers: { apikey: SUPABASE_ANON_KEY }
+        });
+        if (!res.ok) throw new Error('settings-' + res.status);
+        const data = await res.json();
+        const ext = (data && data.external) || {};
+        const list = ['google', 'facebook'].filter(p => !!ext[p]);
+        this._oauthCache = { at: now, list };
+        return list;
+      } catch (e) {
+        return [];
+      }
+    },
+
+    // Injeta botões só dos providers ativos (silencioso se nenhum)
+    async renderOAuth(elId) {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      const active = await this.activeOAuthProviders();
+      if (!active.length) return;
+      const btns = {
+        google: `
+          <button type="button" class="btn btn-outline btn-lg btn-block" onclick="AuthController.oauth('google')" aria-label="Continuar com Google">
+            <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C36.9 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+            Continuar com Google
+          </button>`,
+        facebook: `
+          <button type="button" class="btn btn-lg btn-block" style="background:#1877F2;color:#fff;" onclick="AuthController.oauth('facebook')" aria-label="Continuar com Facebook">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M13.5 21v-7h2.4l.4-3h-2.8V9.1c0-.9.3-1.5 1.6-1.5h1.3V4.9c-.3 0-1.1-.1-2-.1-2 0-3.4 1.2-3.4 3.5V11H8.5v3H11v7h2.5z"/></svg>
+            Continuar com Facebook
+          </button>`
+      };
+      el.innerHTML = `
+        <div class="form-divider"><span>ou</span></div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          ${active.map(p => btns[p]).join('')}
+        </div>`;
     },
 
     showLogin() {
@@ -1553,46 +1489,24 @@ const Pages = {
           <h2>Bem-vindo de volta!</h2>
           <p>Entre na sua conta GUINÉ-VENDAS</p>
         </div>
-        <div class="auth-tabs">
-          <button type="button" class="dashboard-tab active" id="auth-tab-email" onclick="Pages.auth.switchTab('email')">✉️ Email</button>
-          <button type="button" class="dashboard-tab" id="auth-tab-wa" onclick="Pages.auth.switchTab('wa')">💬 WhatsApp</button>
-        </div>
-        <div id="auth-email-pane">
-          <form onsubmit="AuthController.login(event)">
-            <div class="form-group">
-              <label class="form-label" for="login-email">Email ou Telefone</label>
-              <input type="text" class="form-input" id="login-email" placeholder="exemplo@email.com ou +245 000 000 000" required autocomplete="username">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="login-password">Palavra-passe</label>
-              <input type="password" class="form-input" id="login-password" placeholder="••••••••" required autocomplete="current-password">
-            </div>
-            <button type="submit" class="btn btn-accent btn-lg btn-block">Entrar</button>
-          </form>
-        </div>
-        <div id="auth-wa-pane" style="display:none;">
-          <form onsubmit="AuthController.requestWhatsAppCode(event, 'login')">
-            <div class="form-group">
-              <label class="form-label" for="wa-login-phone">Número de WhatsApp</label>
-              <input type="tel" class="form-input" id="wa-login-phone" placeholder="+245 955 394 566" required autocomplete="tel">
-            </div>
-            <button type="submit" class="btn btn-success btn-lg btn-block">📲 Enviar código por WhatsApp</button>
-          </form>
-          <form onsubmit="AuthController.verifyWhatsAppCode(event, 'login')" id="wa-login-verify-form" style="display:none;margin-top:16px;">
-            <div class="form-group">
-              <label class="form-label" for="wa-login-code">Código de 6 dígitos</label>
-              <input type="text" class="form-input" id="wa-login-code" placeholder="000000" required inputmode="numeric" maxlength="6" autocomplete="one-time-code" style="text-align:center;font-size:1.4rem;letter-spacing:6px;">
-            </div>
-            <button type="submit" class="btn btn-accent btn-lg btn-block">✅ Verificar e entrar</button>
-            <p class="form-footer"><a href="#" onclick="AuthController.requestWhatsAppCode(event, 'login'); return false;">Reenviar código</a></p>
-          </form>
-          <div id="wa-login-demo" style="display:none;"></div>
-        </div>
+        <form onsubmit="AuthController.login(event)">
+          <div class="form-group">
+            <label class="form-label" for="login-email">Email ou Telefone</label>
+            <input type="text" class="form-input" id="login-email" placeholder="exemplo@email.com ou +245 000 000 000" required autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="login-password">Palavra-passe</label>
+            <input type="password" class="form-input" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+          </div>
+          <button type="submit" class="btn btn-accent btn-lg btn-block">Entrar</button>
+        </form>
+        <div id="oauth-login"></div>
         <div class="form-footer">
           Não tem conta? <a href="#/register" onclick="Router.navigate('register')">Registar agora</a>
         </div>
       `;
       this.renderPendingEmailNotice(c);
+      this.renderOAuth('oauth-login');
     },
 
     // Aviso persistente de confirmação de email (fica até confirmar)
@@ -1622,79 +1536,42 @@ const Pages = {
           <h2>Criar Conta</h2>
           <p>Junte-se à comunidade GUINÉ-VENDAS</p>
         </div>
-        <div class="auth-tabs">
-          <button type="button" class="dashboard-tab active" id="auth-tab-email" onclick="Pages.auth.switchTab('email')">✉️ Email</button>
-          <button type="button" class="dashboard-tab" id="auth-tab-wa" onclick="Pages.auth.switchTab('wa')">💬 WhatsApp</button>
-        </div>
-        <div id="auth-email-pane">
-          <form onsubmit="AuthController.register(event)">
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="reg-name">Nome *</label>
-                <input type="text" class="form-input" id="reg-name" placeholder="Seu nome" required minlength="2" autocomplete="given-name">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="reg-lastname">Sobrenome *</label>
-                <input type="text" class="form-input" id="reg-lastname" placeholder="Seu sobrenome" required minlength="2" autocomplete="family-name">
-              </div>
+        <form onsubmit="AuthController.register(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="reg-name">Nome *</label>
+              <input type="text" class="form-input" id="reg-name" placeholder="Seu nome" required minlength="2" autocomplete="given-name">
             </div>
             <div class="form-group">
-              <label class="form-label" for="reg-email">Email *</label>
-              <input type="email" class="form-input" id="reg-email" placeholder="exemplo@email.com" required autocomplete="email">
+              <label class="form-label" for="reg-lastname">Sobrenome *</label>
+              <input type="text" class="form-input" id="reg-lastname" placeholder="Seu sobrenome" required minlength="2" autocomplete="family-name">
             </div>
-            <div class="form-group">
-              <label class="form-label" for="reg-phone">Telefone *</label>
-              <input type="tel" class="form-input" id="reg-phone" placeholder="+245 955 394 566" required autocomplete="tel">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="reg-password">Palavra-passe *</label>
-              <input type="password" class="form-input" id="reg-password" placeholder="Mínimo 6 caracteres" required minlength="6" autocomplete="new-password">
-            </div>
-            <div class="form-group">
-              <label class="form-check">
-                <input type="checkbox" required> Aceito os <a href="#/terms">Termos de Uso</a> e <a href="#/privacy">Política de Privacidade</a>
-              </label>
-            </div>
-            <button type="submit" class="btn btn-accent btn-lg btn-block">Criar Conta</button>
-          </form>
-        </div>
-        <div id="auth-wa-pane" style="display:none;">
-          <form onsubmit="AuthController.requestWhatsAppCode(event, 'register')">
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="wa-reg-name">Nome *</label>
-                <input type="text" class="form-input" id="wa-reg-name" placeholder="Seu nome" required minlength="2" autocomplete="given-name">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="wa-reg-lastname">Sobrenome *</label>
-                <input type="text" class="form-input" id="wa-reg-lastname" placeholder="Sobrenome" required minlength="2" autocomplete="family-name">
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="wa-reg-phone">Número de WhatsApp *</label>
-              <input type="tel" class="form-input" id="wa-reg-phone" placeholder="+245 955 394 566" required autocomplete="tel">
-            </div>
-            <div class="form-group">
-              <label class="form-check">
-                <input type="checkbox" id="wa-reg-terms" required> Aceito os <a href="#/terms">Termos de Uso</a> e <a href="#/privacy">Política de Privacidade</a>
-              </label>
-            </div>
-            <button type="submit" class="btn btn-success btn-lg btn-block">📲 Enviar código por WhatsApp</button>
-          </form>
-          <form onsubmit="AuthController.verifyWhatsAppCode(event, 'register')" id="wa-reg-verify-form" style="display:none;margin-top:16px;">
-            <div class="form-group">
-              <label class="form-label" for="wa-reg-code">Código de 6 dígitos</label>
-              <input type="text" class="form-input" id="wa-reg-code" placeholder="000000" required inputmode="numeric" maxlength="6" autocomplete="one-time-code" style="text-align:center;font-size:1.4rem;letter-spacing:6px;">
-            </div>
-            <button type="submit" class="btn btn-accent btn-lg btn-block">✅ Verificar e criar conta</button>
-            <p class="form-footer"><a href="#" onclick="AuthController.requestWhatsAppCode(event, 'register'); return false;">Reenviar código</a></p>
-          </form>
-          <div id="wa-reg-demo" style="display:none;"></div>
-        </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-email">Email *</label>
+            <input type="email" class="form-input" id="reg-email" placeholder="exemplo@email.com" required autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-phone">Telefone *</label>
+            <input type="tel" class="form-input" id="reg-phone" placeholder="+245 955 394 566" required autocomplete="tel">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-password">Palavra-passe *</label>
+            <input type="password" class="form-input" id="reg-password" placeholder="Mínimo 6 caracteres" required minlength="6" autocomplete="new-password">
+          </div>
+          <div class="form-group">
+            <label class="form-check">
+              <input type="checkbox" required> Aceito os <a href="#/terms">Termos de Uso</a> e <a href="#/privacy">Política de Privacidade</a>
+            </label>
+          </div>
+          <button type="submit" class="btn btn-accent btn-lg btn-block">Criar Conta</button>
+        </form>
+        <div id="oauth-register"></div>
         <div class="form-footer">
           Já tem conta? <a href="#/login" onclick="Router.navigate('login')">Entrar</a>
         </div>
       `;
+      this.renderOAuth('oauth-register');
     }
   },
 
@@ -2026,154 +1903,33 @@ const AuthController = {
     Router.navigate('dashboard');
   },
 
-  // ---- WhatsApp OTP: passo 1 — pedir código ----
-  async requestWhatsAppCode(e, mode) {
-    if (e) e.preventDefault();
-    const prefix = mode === 'register' ? 'wa-reg' : 'wa-login';
-    const phoneEl = document.getElementById(prefix + '-phone');
-    const phone = phoneEl ? phoneEl.value.trim() : '';
-    if (!isValidPhone(phone)) {
-      Toast.show('Insira um número válido da Guiné-Bissau (ex.: +245 955 394 566).', 'warning');
+  // ---- Login social (Google / Facebook) via Supabase Auth ----
+  // Grátis, sem custo por login. Exige ativar o provider no painel:
+  // Authentication → Providers → Google / Facebook.
+  async oauth(provider) {
+    if (provider !== 'google' && provider !== 'facebook') return;
+    if (!AppData.isCloud) {
+      Toast.show('Login social disponível após ligar o Supabase (modo cloud).', 'info');
       return;
     }
-    if (mode === 'register') {
-      const name = document.getElementById('wa-reg-name').value.trim();
-      const lastname = document.getElementById('wa-reg-lastname').value.trim();
-      if (name.length < 2 || lastname.length < 2) {
-        Toast.show('Preencha nome e sobrenome primeiro.', 'warning');
-        return;
-      }
-      if (!document.getElementById('wa-reg-terms').checked) {
-        Toast.show('Aceite os Termos de Uso para continuar.', 'warning');
-        return;
-      }
-    }
-
-    // Modo cloud: usa a Edge Function wa-otp (precisa estar publicada)
-    if (AppData.isCloud) {
-      try {
-        const { data, error } = await supabaseClient.functions.invoke('wa-otp', {
-          body: { action: 'request', phone }
-        });
-        if (error) throw error;
-        if (data && data.demoCode) {
-          this.showDemoCode(mode, data.demoCode);
-        } else {
-          Toast.show('Código enviado para o seu WhatsApp! 💬', 'success');
-        }
-        this.showVerifyForm(mode);
-        return;
-      } catch (err) {
-        Toast.show('WhatsApp indisponível no servidor. Publique a Edge Function wa-otp (ver README).', 'error');
-        return;
-      }
-    }
-
-    // Modo local
-    const res = await WhatsAppOTP.request(phone);
-    if (!res.ok) {
-      Toast.show(res.error, 'warning');
-      return;
-    }
-    if (res.demoCode) {
-      this.showDemoCode(mode, res.demoCode);
-    } else {
-      Toast.show('Código enviado para o seu WhatsApp! 💬', 'success');
-    }
-    this.showVerifyForm(mode);
-  },
-
-  showVerifyForm(mode) {
-    const prefix = mode === 'register' ? 'wa-reg' : 'wa-login';
-    const form = document.getElementById(prefix + '-verify-form');
-    if (form) {
-      form.style.display = 'block';
-      const codeEl = document.getElementById(prefix + '-code');
-      if (codeEl) codeEl.focus();
-    }
-  },
-
-  showDemoCode(mode, code) {
-    const prefix = mode === 'register' ? 'wa-reg' : 'wa-login';
-    const box = document.getElementById(prefix + '-demo');
-    if (box) {
-      box.style.display = 'block';
-      box.innerHTML = `
-        <div style="margin-top:12px;padding:14px;border:2px dashed var(--accent);border-radius:var(--radius);background:var(--accent-light);text-align:center;">
-          <div style="font-size:0.8rem;color:var(--text-light);margin-bottom:4px;">🧪 MODO DEMO — configure um sender para enviar de verdade (ver <strong>js/supabase-config.js</strong>)</div>
-          <div style="font-size:1.8rem;font-weight:900;letter-spacing:8px;color:var(--accent);">${esc(code)}</div>
-        </div>`;
-      const codeEl = document.getElementById(prefix + '-code');
-      if (codeEl) codeEl.value = '';
-    }
-    Toast.show('Código demo gerado (válido 5 min).', 'info');
-  },
-
-  // ---- WhatsApp OTP: passo 2 — verificar código e entrar ----
-  async verifyWhatsAppCode(e, mode) {
-    if (e) e.preventDefault();
-    const prefix = mode === 'register' ? 'wa-reg' : 'wa-login';
-    const phone = document.getElementById(prefix + '-phone').value.trim();
-    const code = document.getElementById(prefix + '-code').value.trim();
-    if (!RateLimit.check('wa-verify', 5, 60000)) {
+    if (!RateLimit.check('oauth-' + provider, 5, 60000)) {
       Toast.show('Muitas tentativas. Aguarde 1 minuto.', 'warning');
       return;
     }
-
-    // Modo cloud: verifica na Edge Function wa-otp (que devolve magic link)
-    if (AppData.isCloud) {
-      try {
-        const name = mode === 'register'
-          ? `${document.getElementById('wa-reg-name').value.trim()} ${document.getElementById('wa-reg-lastname').value.trim()}`
-          : undefined;
-        const { data, error } = await supabaseClient.functions.invoke('wa-otp', {
-          body: { action: 'verify', phone, code, name }
-        });
-        if (error) throw error;
-        if (data && data.actionLink) {
-          window.location.href = data.actionLink; // magic link do Supabase: cria sessão
-          return;
-        }
-        throw new Error('no-link');
-      } catch (err) {
-        Toast.show('Código inválido/expirado ou função wa-otp indisponível.', 'error');
-        return;
-      }
+    try {
+      const redirectTo = window.location.origin + window.location.pathname + '#/';
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo }
+      });
+      if (error) throw error;
+      // O browser navega para o Google/Facebook; ao voltar, o
+      // Router.handleAuthCallback conclui a sessão. Se o provider
+      // não estiver ativo no Supabase, cai aqui:
+    } catch (err) {
+      const name = provider === 'google' ? 'Google' : 'Facebook';
+      Toast.show(`Login com ${name} indisponível. Ative o provider no Supabase (Auth → Providers).`, 'error');
     }
-
-    // Modo local
-    const res = await WhatsAppOTP.verify(phone, code);
-    if (!res.ok) {
-      Toast.show(res.error, 'error');
-      return;
-    }
-    const users = JSON.parse(localStorage.getItem('gv_users') || '[]');
-    const digits = WhatsAppOTP.digits(phone);
-    let user = users.find(u => WhatsAppOTP.digits(u.phone) === digits);
-    if (!user && mode === 'login') {
-      Toast.show('Número sem conta. Registe-se primeiro na aba WhatsApp do registo.', 'warning');
-      Router.navigate('register');
-      return;
-    }
-    if (!user) {
-      const name = `${document.getElementById('wa-reg-name').value.trim()} ${document.getElementById('wa-reg-lastname').value.trim()}`;
-      user = {
-        id: Date.now(),
-        name,
-        email: '',
-        phone: res.phone,
-        password: null,
-        passwordHash: null,
-        waVerified: true
-      };
-      users.push(user);
-      try { localStorage.setItem('gv_users', JSON.stringify(users)); } catch (err) { /* quota */ }
-      Toast.show('Conta criada via WhatsApp! 🎉', 'success');
-    } else {
-      Toast.show(`Bem-vindo de volta, ${esc(user.name)}! 👋`, 'success');
-    }
-    AppData.setUser({ id: user.id, name: user.name, email: user.email, phone: user.phone });
-    Router.navigate('dashboard');
   },
 
   async logout() {

@@ -16,6 +16,7 @@ GUINÉ-VENDAS é uma plataforma completa de classificados online que permite aos
 - ✅ **Favoritos** - Guarde os anúncios que mais gosta
 - ✅ **Perfil de utilizador** - Gestão de conta
 - ✅ **Contactar vendedores** - Ver telefone e WhatsApp
+- ✅ **Login social** - Google e Facebook (modo cloud)
 - ✅ **Design responsivo** - Funciona em desktop, tablet e telemóvel
 - ✅ **Modo Cloud** - Dados partilhados entre todos os utilizadores (Supabase)
 
@@ -100,30 +101,16 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6...';
 
 ---
 
-## 💬 LOGIN/REGISTO VIA WHATSAPP (código de 6 dígitos)
-O site tem abas **Email | WhatsApp** no login e no registo. O fluxo: número → código de 6 dígitos no WhatsApp (válido 5 min) → conta criada ou sessão iniciada. Sem palavra-passe.
+## 🔑 LOGIN/REGISTO COM GOOGLE E FACEBOOK (grátis, sem custo por login)
 
-### Modo demo (já funciona, sem configurar nada)
-Peça o código e ele aparece no ecrã (aviso laranja). Serve para testar o fluxo de ponta a ponta.
+O login e o registo têm botões **Continuar com Google** e **Continuar com Facebook** (modo cloud). O Supabase trata do OAuth; o site recebe a sessão automaticamente.
 
-### Enviar de verdade (Evolution API — gratuita/self-hosted)
-1. Suba uma instância da [Evolution API](https://doc.evolution-api.com) (VPS/Docker) e ligue o seu número.
-2. Em `js/supabase-config.js`, preencha:
-```javascript
-const WHATSAPP_API_URL = 'https://sua-evolution.com/message/sendText/minha-instancia';
-const WHATSAPP_API_KEY = 'apikey-da-instancia';
-```
-3. Republicar. O código passa a chegar no WhatsApp do utilizador; o modo demo desliga sozinho.
+### Ativar no Supabase (você, 10 min, grátis)
+1. **Google** — [console.cloud.google.com](https://console.cloud.google.com) → novo projeto → **APIs & Services → Credentials → Create OAuth client ID** (tipo Web). Origem autorizada: `https://nbvmjcxbgvjztkslvfsf.supabase.co`. Redirect autorizado: `https://nbvmjcxbgvjztkslvfsf.supabase.co/auth/v1/callback`. Depois, no Supabase: **Authentication → Providers → Google** → ative e cole Client ID + Secret.
+2. **Facebook** — [developers.facebook.com](https://developers.facebook.com) → novo App (tipo Consumer) → **Facebook Login** → ative. OAuth redirect: `https://nbvmjcxbgvjztkslvfsf.supabase.co/auth/v1/callback`. Depois, no Supabase: **Authentication → Providers → Facebook** → ative e cole App ID + Secret.
+3. Pronto — os botões passam a funcionar. Se um provider não estiver ativo, o botão avisa em vez de falhar em silêncio.
 
-### Modo cloud (Supabase)
-1. Execute `supabase-whatsapp-setup.sql` no SQL Editor (tabela `otp_codes`, fechada — só a função acede).
-2. Publique a função: `supabase functions deploy wa-otp --no-verify-jwt`
-3. Defina os segredos: `supabase secrets set EVOLUTION_API_URL=... EVOLUTION_API_KEY=...`
-   - Sem `EVOLUTION_API_URL`, a função responde em modo demo (só para testes!).
-4. No `verify` com sucesso, a função cria/encontra o utilizador (email interno `wa_<número>@whatsapp.guine-vendas.local`, invisível) e devolve um magic link — o site navega para ele e a sessão fica ativa.
-
-### Segurança do OTP
-- Só o hash SHA-256 do código é guardado (nunca o código), expiração de 5 min, máx. 5 tentativas e rate-limit de 3 pedidos/min por número.
+> Nota: o perfil (nome/avatar) vem do Google/Facebook via trigger `handle_new_user`. Em modo local (sem Supabase), os botões ficam ocultos.
 
 ---
 

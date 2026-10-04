@@ -364,22 +364,6 @@ button {
   justify-content: center;
 }
 
-/* Abas Email / WhatsApp no login e registo */
-.auth-tabs {
-  display: flex;
-  gap: 4px;
-  background: var(--bg);
-  border-radius: var(--radius-lg);
-  padding: 6px;
-  margin-bottom: 24px;
-}
-
-.auth-tabs .dashboard-tab {
-  flex: 1;
-  text-align: center;
-  justify-content: center;
-}
-
 /* Acessibilidade: foco visível em elementos clicáveis */
 a:focus-visible,
 button:focus-visible,

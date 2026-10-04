@@ -33,30 +33,6 @@ const SUPABASE_ENABLED =
   typeof SUPABASE_URL === 'string' && SUPABASE_URL.startsWith('http') &&
   typeof SUPABASE_ANON_KEY === 'string' && SUPABASE_ANON_KEY.startsWith('eyJ');
 
-/* ============================================
-   WHATSAPP LOGIN (opcional)
-   Como funciona: o utilizador digita o número,
-   recebe um código de 6 dígitos no WhatsApp e
-   entra ao confirmar o código. Sem palavra-passe.
-
-   MODO DEMO (padrão): o código aparece no ecrã
-   para testes, sem enviar nada.
-
-   MODO REAL: ligue um sender HTTP (ex.: Evolution
-   API gratuita/self-hosted) preenchendo abaixo:
-     WHATSAPP_API_URL = 'https://sua-evolution.com/message/sendText/minha-instancia'
-     WHATSAPP_API_KEY = 'apikey-da-instancia'
-   Formato enviado: { number: '245955111222', text: '...' }
-   (Header: apikey: WHATSAPP_API_KEY)
-   ============================================ */
-const WHATSAPP_API_URL = '';
-const WHATSAPP_API_KEY = '';
-const WHATSAPP_SENDER_NAME = 'GUINÉ-VENDAS';
-
-const WHATSAPP_SENDER_ENABLED =
-  typeof WHATSAPP_API_URL === 'string' && WHATSAPP_API_URL.startsWith('http') &&
-  typeof WHATSAPP_API_KEY === 'string' && WHATSAPP_API_KEY.length >= 4;
-
 let supabaseClient = null;
 if (SUPABASE_ENABLED) {
   if (window.supabase && window.supabase.createClient) {
