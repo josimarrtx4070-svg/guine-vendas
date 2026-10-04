@@ -752,6 +752,14 @@ const Router = {
 
   handleRoute() {
     const hash = window.location.hash || '#/';
+
+    // Retorno de magic link do Supabase (login via WhatsApp):
+    // #access_token=...&refresh_token=...&type=magiclink
+    if (hash.includes('access_token=') && hash.includes('refresh_token=')) {
+      this.handleAuthCallback(hash);
+      return;
+    }
+
     const parts = hash.replace('#/', '').split('/');
     const page = parts[0] || 'home';
     
@@ -800,6 +808,32 @@ const Router = {
 
   navigate(path) {
     window.location.hash = `/${path}`;
+  },
+
+  // Consome os tokens do magic link e cria a sessão local
+  async handleAuthCallback(hash) {
+    try {
+      const p = new URLSearchParams(hash.replace(/^#/, ''));
+      const access_token = p.get('access_token');
+      const refresh_token = p.get('refresh_token');
+      if (access_token && refresh_token && AppData.isCloud) {
+        const { error } = await supabaseClient.auth.setSession({ access_token, refresh_token });
+        if (!error) {
+          await AppData.enterSession();
+          const u = AppData.getUser();
+          if (u) {
+            Toast.show(`Bem-vindo, ${esc(u.name)}! 👋`, 'success');
+            this.navigate('dashboard');
+            return;
+          }
+        }
+      }
+      Toast.show('Não foi possível concluir o login. Tente de novo.', 'error');
+      this.navigate('login');
+    } catch (e) {
+      Toast.show('Não foi possível concluir o login. Tente de novo.', 'error');
+      this.navigate('login');
+    }
   },
 
   showStatic(name) {
