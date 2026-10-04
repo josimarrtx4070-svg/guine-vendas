@@ -1592,6 +1592,26 @@ const Pages = {
           Não tem conta? <a href="#/register" onclick="Router.navigate('register')">Registar agora</a>
         </div>
       `;
+      this.renderPendingEmailNotice(c);
+    },
+
+    // Aviso persistente de confirmação de email (fica até confirmar)
+    renderPendingEmailNotice(container) {
+      let pending = null;
+      try { pending = sessionStorage.getItem('gv_pending_email'); } catch (e) { /* ignore */ }
+      if (!pending || !container) return;
+      const header = container.querySelector('.auth-header');
+      if (!header || container.querySelector('#pending-email-notice')) return;
+      const box = document.createElement('div');
+      box.id = 'pending-email-notice';
+      box.setAttribute('role', 'status');
+      box.innerHTML = `
+        <div style="margin:0 0 20px;padding:14px 16px;border:2px solid var(--accent);border-radius:var(--radius);background:var(--accent-light);font-size:0.9rem;line-height:1.6;">
+          <div style="font-weight:800;margin-bottom:4px;">📧 Confirme o seu email</div>
+          <div style="color:var(--text-light);">Enviámos um link para <strong>${esc(pending)}</strong>. Abra o email (verifique também o spam) e clique no link antes de entrar.</div>
+          <button type="button" class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="AuthController.resendEmail()">↻ Reenviar email</button>
+        </div>`;
+      header.after(box);
     },
 
     showRegister() {
@@ -1838,9 +1858,18 @@ const AuthController = {
     if (AppData.isCloud) {
       const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (error || !data || !data.session) {
+        const code = error && error.code ? String(error.code) : '';
+        const msg = error && error.message ? String(error.message) : '';
+        if (code === 'email_not_confirmed' || /confirm|verif/i.test(msg)) {
+          try { sessionStorage.setItem('gv_pending_email', email); } catch (e) { /* ignore */ }
+          Toast.show('Falta confirmar o seu email. Verifique a caixa de entrada e o spam.', 'warning');
+          try { Pages.auth.showLogin(); } catch (e) { /* ignore */ }
+          return;
+        }
         Toast.show('Email ou palavra-passe incorretos.', 'error');
         return;
       }
+      try { sessionStorage.removeItem('gv_pending_email'); } catch (e) { /* ignore */ }
       await AppData.enterSession();
       const u = AppData.getUser();
       Toast.show(`Bem-vindo de volta, ${u ? esc(u.name) : ''}! 👋`, 'success');
@@ -1877,6 +1906,27 @@ const AuthController = {
     } else {
       Toast.show('Email ou palavra-passe incorretos.', 'error');
     }
+  },
+
+  // Reenvia o email de confirmação (modo cloud)
+  async resendEmail() {
+    if (!AppData.isCloud) return;
+    let email = '';
+    try { email = sessionStorage.getItem('gv_pending_email') || ''; } catch (e) { /* ignore */ }
+    if (!email) {
+      Toast.show('Registe-se primeiro para receber o email.', 'warning');
+      return;
+    }
+    if (!RateLimit.check('resend-' + email, 3, 60000)) {
+      Toast.show('Aguarde 1 minuto antes de reenviar.', 'warning');
+      return;
+    }
+    const { error } = await supabaseClient.auth.resend({ type: 'signup', email });
+    if (error) {
+      Toast.show('Não foi possível reenviar. Tente mais tarde.', 'error');
+      return;
+    }
+    Toast.show(`Email reenviado para ${email}! 📧 Verifique a caixa de entrada e o spam.`, 'success');
   },
 
   async register(e) {
@@ -1931,10 +1981,12 @@ const AuthController = {
       }
       // Se o Supabase devolveu sessão na hora (email não confirmado), entra já.
       if (data && data.session) {
+        try { sessionStorage.removeItem('gv_pending_email'); } catch (e) { /* ignore */ }
         await AppData.enterSession();
         Toast.show('Conta criada com sucesso! 🎉', 'success');
         Router.navigate('dashboard');
       } else {
+        try { sessionStorage.setItem('gv_pending_email', email); } catch (e) { /* ignore */ }
         Toast.show('Conta criada! Verifique o seu email para ativar a conta.', 'info');
         Router.navigate('login');
       }
