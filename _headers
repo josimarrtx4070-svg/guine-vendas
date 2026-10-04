@@ -1,0 +1,8 @@
+# Evita JS/CSS antigos após cada deploy (stale cache).
+# O HTML nunca é cacheado; JS/CSS por 5 minutos.
+/index.html
+  Cache-Control: no-store
+/*.js
+  Cache-Control: public, max-age=300
+/*.css
+  Cache-Control: public, max-age=300

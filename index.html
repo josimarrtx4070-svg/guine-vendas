@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="pt-CV">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="GUINÉ-VENDAS - O maior marketplace de anúncios da Guiné-Bissau. Compre, venda e encontre tudo o que precisa.">
+  <meta name="keywords" content="Guiné-Bissau, anúncios, marketplace, comprar, vender, Bissau, classificados">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#F78302">
+  <link rel="canonical" href="./index.html">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_CV">
+  <meta property="og:title" content="GUINÉ-VENDAS - Marketplace da Guiné-Bissau">
+  <meta property="og:description" content="Compre, venda e descubra oportunidades em todo o país. Publicação gratuita.">
+  <meta property="og:image" content="./images/og-cover.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="GUINÉ-VENDAS - Marketplace da Guiné-Bissau">
+  <meta name="twitter:description" content="Compre, venda e descubra oportunidades em todo o país.">
+  <title>GUINÉ-VENDAS - Marketplace da Guiné-Bissau</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>">
+</head>
+<body>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="header">
+    <div class="header-top">
+      <div class="container">
+        <span>🇬🇼 O maior marketplace da Guiné-Bissau</span>
+        <div>
+          <a href="#/about">Sobre Nós</a>
+          <a href="#/contact">Contacto</a>
+          <a href="#/help">Ajuda</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="header-main">
+      <div class="container">
+        <a href="#/" class="logo">
+          <div class="logo-icon">GV</div>
+          <div class="logo-text">GUINÉ-<span>VENDAS</span></div>
+        </a>
+        
+        <div class="search-bar">
+          <input type="text" id="search-input" placeholder="O que está à procura?" onkeyup="if(event.key==='Enter') filterAds()">
+          <select id="search-category">
+            <option value="">Todas categorias</option>
+            <option value="imoveis">🏠 Imóveis</option>
+            <option value="veiculos">🚗 Veículos</option>
+            <option value="eletronicos">📱 Eletrónicos</option>
+            <option value="emprego">💼 Emprego</option>
+            <option value="casa">🏡 Casa & Jardim</option>
+            <option value="moda">👗 Moda & Beleza</option>
+            <option value="eletronicos2">💻 Computadores</option>
+            <option value="servicos">🔧 Serviços</option>
+            <option value="agricultura">🌾 Agricultura</option>
+            <option value="outros">📦 Outros</option>
+          </select>
+          <button onclick="filterAds()">🔍 Pesquisar</button>
+        </div>
+        
+        <div class="header-actions">
+          <a href="#/favorites" class="header-user" title="Favoritos">
+            ❤️ <span id="favorites-count" class="header-count">0</span>
+          </a>
+          
+          <div id="header-auth" class="d-flex gap-1">
+            <button class="btn btn-outline" onclick="Router.navigate('login')">Entrar</button>
+            <button class="btn btn-accent" onclick="Router.navigate('post-ad')">+ Publicar</button>
+          </div>
+          
+          <div id="header-user" class="header-user" onclick="Router.navigate('dashboard')">
+            <div class="avatar" id="user-avatar">U</div>
+            <span class="user-name" id="user-name">Utilizador</span>
+          </div>
+          
+          <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== MOBILE MENU ==================== -->
+  <div id="mobile-menu" class="hidden" style="background:white;border-bottom:2px solid var(--accent);">
+    <div class="container" style="padding:16px 20px;">
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <a href="#/" class="btn btn-block" style="justify-content:flex-start;" onclick="toggleMobileMenu()">🏠 Início</a>
+        <a href="#/favorites" class="btn btn-block" style="justify-content:flex-start;" onclick="toggleMobileMenu()">❤️ Favoritos</a>
+        <a href="#/post-ad" class="btn btn-block" style="justify-content:flex-start;" onclick="toggleMobileMenu()">➕ Publicar Anúncio</a>
+        <a href="#/dashboard" class="btn btn-block" style="justify-content:flex-start;" onclick="toggleMobileMenu()">👤 Meu Painel</a>
+        <div class="form-divider"><span>ou</span></div>
+        <a href="#/login" class="btn btn-outline btn-block" onclick="toggleMobileMenu()">🔑 Entrar</a>
+        <a href="#/register" class="btn btn-accent btn-block" onclick="toggleMobileMenu()">📝 Registar</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PAGES CONTAINER ==================== -->
+  <main id="main-content">
+
+    <!-- ========== HOME PAGE ========== -->
+    <div id="page-home" class="page">
+      <!-- Hero -->
+      <section class="hero">
+        <div class="container">
+          <h1>Encontre tudo na <span>Guiné-Bissau</span></h1>
+          <p>Compre, venda e descubra oportunidades em todo o país</p>
+          <div class="hero-search">
+            <input type="text" placeholder="O que está à procura?" id="hero-search-input" onkeyup="if(event.key==='Enter') filterAds()">
+            <select id="hero-search-category">
+              <option value="">Todas categorias</option>
+              <option value="imoveis">🏠 Imóveis</option>
+              <option value="veiculos">🚗 Veículos</option>
+              <option value="eletronicos">📱 Eletrónicos</option>
+              <option value="emprego">💼 Emprego</option>
+              <option value="casa">🏡 Casa & Jardim</option>
+              <option value="moda">👗 Moda & Beleza</option>
+              <option value="eletronicos2">💻 Computadores</option>
+              <option value="servicos">🔧 Serviços</option>
+              <option value="agricultura">🌾 Agricultura</option>
+              <option value="outros">📦 Outros</option>
+            </select>
+            <button onclick="filterAds()">🔍 Pesquisar</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Categories -->
+      <section class="section">
+        <div class="container">
+          <div class="section-header">
+            <h2 class="section-title">Explorar por <span>Categoria</span></h2>
+            <a href="#" class="section-link" onclick="Router.navigate('category/imoveis'); return false;">Ver todas →</a>
+          </div>
+          <div class="categories-grid" id="categories-grid"></div>
+        </div>
+      </section>
+
+      <!-- Featured Ads -->
+      <section class="section" style="background:white;">
+        <div class="container">
+          <div class="section-header">
+            <h2 class="section-title">Anúncios em <span>Destaque</span></h2>
+            <a href="#" class="section-link">Ver todos →</a>
+          </div>
+          <div class="listings-grid" id="featured-ads-grid"></div>
+        </div>
+      </section>
+
+      <!-- Recent Ads -->
+      <section class="section">
+        <div class="container">
+          <div class="section-header">
+            <h2 class="section-title">Anúncios <span>Recentes</span></h2>
+            <a href="#" class="section-link">Ver todos →</a>
+          </div>
+          <div class="listings-grid" id="recent-ads-grid"></div>
+        </div>
+      </section>
+
+      <!-- CTA Section -->
+      <section class="section" style="background: linear-gradient(135deg, var(--accent) 0%, #E07600 100%); color: white; text-align: center;">
+        <div class="container">
+          <h2 style="font-size: 2rem; font-weight: 800; margin-bottom: 12px;">Quer vender algo?</h2>
+          <p style="font-size: 1.1rem; margin-bottom: 30px; opacity: 0.9;">Publique o seu anúncio gratuitamente e alcance milhares de compradores na Guiné-Bissau.</p>
+          <button class="btn btn-lg" style="background:white;color:var(--accent);font-weight:700;" onclick="Router.navigate('post-ad')">📝 Publicar Anúncio Grátis</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- ========== CATEGORY PAGE ========== -->
+    <div id="page-category" class="page hidden">
+      <div class="container">
+        <div class="results-info">
+          <div class="results-count">
+            <strong id="category-count">0</strong> resultados em <span id="breadcrumb-category">Categoria</span>
+          </div>
+          <select class="sort-select" onchange="sortListings(this.value)">
+            <option value="newest">Mais recentes</option>
+            <option value="oldest">Mais antigos</option>
+            <option value="price-low">Preço: Menor → Maior</option>
+            <option value="price-high">Preço: Maior → Menor</option>
+            <option value="views">Mais visualizados</option>
+          </select>
+        </div>
+        <div class="listings-grid" id="listings-grid"></div>
+      </div>
+    </div>
+
+    <!-- ========== SEARCH PAGE ========== -->
+    <div id="page-search" class="page hidden">
+      <div class="container">
+        <div class="results-info">
+          <div class="results-count">
+            <strong id="search-count">0</strong> resultados para "<span id="search-query-display"></span>"
+          </div>
+          <select class="sort-select" onchange="sortListings(this.value)">
+            <option value="newest">Mais recentes</option>
+            <option value="oldest">Mais antigos</option>
+            <option value="price-low">Preço: Menor → Maior</option>
+            <option value="price-high">Preço: Maior → Menor</option>
+            <option value="views">Mais visualizados</option>
+          </select>
+        </div>
+        <div class="listings-grid" id="search-listings-grid"></div>
+        <div id="search-pagination" class="pagination"></div>
+      </div>
+    </div>
+
+    <!-- ========== AD DETAIL PAGE ========== -->
+    <div id="page-ad" class="page hidden">
+      <div class="container">
+        <div class="ad-detail-grid">
+          <div>
+            <!-- Gallery -->
+            <div class="ad-gallery">
+              <div class="ad-main-image" id="ad-main-image">
+                <div style="width:100%;height:100%;background:linear-gradient(135deg,#f5f5f5,#e0e0e0);display:flex;align-items:center;justify-content:center;font-size:5rem;">📦</div>
+              </div>
+              <div class="ad-thumbnails" id="ad-thumbnails"></div>
+            </div>
+            
+            <!-- Content -->
+            <div class="ad-content" style="margin-top: 20px;">
+              <div class="ad-category-breadcrumb">
+                <a href="#/">Início</a> / <a href="#" id="ad-category-link">Categoria</a> / <span id="ad-category">Categoria</span>
+              </div>
+              
+              <h1 class="ad-title" id="ad-title">Título do Anúncio</h1>
+              <div class="ad-price" id="ad-price">0 CFA</div>
+              
+              <div class="ad-description" id="ad-description">
+                <p>Descrição do anúncio...</p>
+              </div>
+              
+              <div class="ad-specs">
+                <h3>Informações</h3>
+                <div class="specs-grid">
+                  <div class="spec-item">
+                    <span class="spec-label">Localização</span>
+                    <span class="spec-value" id="ad-location">📍 Bissau</span>
+                  </div>
+                  <div class="spec-item">
+                    <span class="spec-label">Condição</span>
+                    <span class="spec-value" id="ad-condition">Usado</span>
+                  </div>
+                  <div class="spec-item">
+                    <span class="spec-label">Publicado</span>
+                    <span class="spec-value" id="ad-date">Hoje</span>
+                  </div>
+                  <div class="spec-item">
+                    <span class="spec-label">Visualizações</span>
+                    <span class="spec-value" id="ad-views">0</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="ad-actions">
+                <button class="btn btn-accent btn-lg" onclick="document.getElementById('seller-contact').scrollIntoView({behavior:'smooth'})">📞 Contactar Vendedor</button>
+                <button class="btn btn-outline btn-lg" id="ad-favorite-btn" onclick="toggleFavoriteCurrentAd()">🤍 Favoritar</button>
+              </div>
+              
+              <div class="ad-actions" id="share-buttons" style="margin-bottom:24px;"></div>
+              
+              <div class="ad-safety">
+                <h4>🛡️ Dicas de Segurança</h4>
+                <p>Não faça pagamentos antecipados. Encontre o vendedor pessoalmente antes de comprar. Desconfie de preços muito abaixo do mercado. Verifique sempre o produto antes de pagar.</p>
+              </div>
+              
+              <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-outline btn-sm" id="ad-status-badge" style="color:var(--success);">🟢 Ativo</button>
+                <button class="btn btn-outline btn-sm" onclick="AdController.reportAd(parseInt(document.getElementById('ad-id').textContent))">🚩 Reportar</button>
+                <button class="btn btn-outline btn-sm" onclick="window.print()">🖨️ Imprimir</button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Sidebar -->
+          <div class="ad-sidebar">
+            <div class="seller-card" id="seller-contact">
+              <div class="seller-info">
+                <div class="seller-avatar" id="seller-avatar">V</div>
+                <div>
+                  <div class="seller-name" id="seller-name">Vendedor</div>
+                  <div class="seller-since">Membro desde 2024</div>
+                </div>
+              </div>
+              
+              <div class="seller-contact-btns">
+                <div class="phone-display">
+                  <div class="phone-number" id="seller-phone">+245 000 000 000</div>
+                  <div class="phone-label">Telefone</div>
+                </div>
+                <button class="btn btn-success btn-block" onclick="showContactModal(document.getElementById('seller-phone').textContent)">📞 Ver Telefone</button>
+                <button class="btn btn-outline btn-block" onclick="Pages.ad.contactSeller()">💬 Enviar Mensagem</button>
+              </div>
+            </div>
+            
+            <div id="contact-gate" class="seller-card" style="text-align:center;">
+              <p style="margin-bottom:16px;color:var(--text-light);">Inicie sessão para ver o contacto do vendedor.</p>
+              <button class="btn btn-accent btn-block" onclick="Router.navigate('login')">Entrar para ver contacto</button>
+            </div>
+            
+            <div class="ad-location-info">
+              <h4>📍 Localização</h4>
+              <div class="location-detail" id="ad-location-info">📍 Bissau, Guiné-Bissau</div>
+              <div class="ad-date-info" id="ad-date-info">📅 Publicado hoje</div>
+              <div class="ad-date-info" id="ad-views-info">👁️ 0 visualizações</div>
+              <div class="ad-date-info">🆔 <span id="ad-id">000000</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== POST AD PAGE ========== -->
+    <div id="page-post-ad" class="page hidden">
+      <div class="container post-ad-page">
+        <div class="post-ad-form-container">
+          <div class="post-ad-header">
+            <h2>Publicar Anúncio</h2>
+            <p>Preencha os detalhes do seu anúncio em 3 passos simples</p>
+          </div>
+          
+          <div class="steps-indicator">
+            <div class="step-dot active"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+          </div>
+          
+          <!-- Step 1: Category -->
+          <div class="post-ad-step" style="display:block;">
+            <div class="form-group">
+              <label class="form-label">Categoria *</label>
+              <select class="form-select" id="post-category">
+                <option value="">Selecione uma categoria</option>
+                <option value="imoveis">🏠 Imóveis</option>
+                <option value="veiculos">🚗 Veículos</option>
+                <option value="eletronicos">📱 Eletrónicos</option>
+                <option value="emprego">💼 Emprego</option>
+                <option value="casa">🏡 Casa & Jardim</option>
+                <option value="moda">👗 Moda & Beleza</option>
+                <option value="eletronicos2">💻 Computadores</option>
+                <option value="servicos">🔧 Serviços</option>
+                <option value="agricultura">🌾 Agricultura</option>
+                <option value="outros">📦 Outros</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Subcategoria</label>
+              <select class="form-select" id="post-subcategory">
+                <option value="">Selecione primeiro uma categoria</option>
+              </select>
+            </div>
+            
+            <button class="btn btn-accent btn-lg btn-block" onclick="Pages.postAd.nextStep()">Continuar →</button>
+          </div>
+          
+          <!-- Step 2: Details -->
+          <div class="post-ad-step" style="display:none;">
+            <div class="form-group">
+              <label class="form-label">Título do Anúncio *</label>
+              <input type="text" class="form-input" id="post-title" placeholder="Ex: Apartamento T3 em Bissau" maxlength="80">
+              <small style="color:var(--text-muted);float:right;" id="title-count">0/80</small>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Preço (CFA)</label>
+              <input type="text" class="form-input" id="post-price" placeholder="Ex: 5000000 (ou deixe vazio para negociável)">
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Província *</label>
+                <select class="form-select" id="post-province">
+                  <option value="">Selecione</option>
+                  <option value="Bissau">Bissau</option>
+                  <option value="Bafatá">Bafatá</option>
+                  <option value="Biombo">Biombo</option>
+                  <option value="Bolama">Bolama</option>
+                  <option value="Cacheu">Cacheu</option>
+                  <option value="Gabú">Gabú</option>
+                  <option value="Oio">Oio</option>
+                  <option value="Quinara">Quinara</option>
+                  <option value="Tombali">Tombali</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Localização *</label>
+                <input type="text" class="form-input" id="post-location" placeholder="Ex: Zona do Ouro">
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Condição *</label>
+              <select class="form-select" id="post-condition">
+                <option value="">Selecione</option>
+                <option value="Novo">Novo</option>
+                <option value="Usado">Usado</option>
+                <option value="Como novo">Como novo</option>
+              </select>
+            </div>
+            
+            <div style="display:flex;gap:12px;">
+              <button class="btn btn-outline btn-lg" style="flex:1;" onclick="Pages.postAd.showStep(1)">← Voltar</button>
+              <button class="btn btn-accent btn-lg" style="flex:2;" onclick="Pages.postAd.nextStep()">Continuar →</button>
+            </div>
+          </div>
+          
+          <!-- Step 3: Description & Photos -->
+          <div class="post-ad-step" style="display:none;">
+            <div class="form-group">
+              <label class="form-label">Descrição *</label>
+              <textarea class="form-input" id="post-description" placeholder="Descreva o seu anúncio com detalhes. Inclua informações relevantes como estado, características, motivo da venda..." rows="6"></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Fotos</label>
+              <div class="image-upload-area" id="image-upload-area">
+                <div class="upload-icon">📷</div>
+                <h4>Adicionar Fotos</h4>
+                <p>Arraste ou clique para carregar (máx. 5 fotos)</p>
+                <input type="file" id="image-input" multiple accept="image/*" style="display:none;">
+              </div>
+              <div class="image-preview-grid" id="image-preview-grid"></div>
+            </div>
+            
+            <div style="display:flex;gap:12px;">
+              <button class="btn btn-outline btn-lg" style="flex:1;" onclick="Pages.postAd.showStep(2)">← Voltar</button>
+              <button class="btn btn-success btn-lg" style="flex:2;" onclick="Pages.postAd.submitAd()">✅ Publicar Anúncio</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== EDIT AD PAGE ========== -->
+    <div id="page-edit-ad" class="page hidden">
+      <div class="container post-ad-page">
+        <div class="post-ad-form-container">
+          <div class="post-ad-header">
+            <h2>Editar Anúncio</h2>
+            <p>Atualize os detalhes do seu anúncio</p>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="edit-category">Categoria</label>
+            <select class="form-select" id="edit-category" onchange="Pages.editAd.updateSubcategories()">
+              <option value="">Selecione uma categoria</option>
+              <option value="imoveis">🏠 Imóveis</option>
+              <option value="veiculos">🚗 Veículos</option>
+              <option value="eletronicos">📱 Eletrónicos</option>
+              <option value="emprego">💼 Emprego</option>
+              <option value="casa">🏡 Casa & Jardim</option>
+              <option value="moda">👗 Moda & Beleza</option>
+              <option value="eletronicos2">💻 Computadores</option>
+              <option value="servicos">🔧 Serviços</option>
+              <option value="agricultura">🌾 Agricultura</option>
+              <option value="outros">📦 Outros</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="edit-subcategory">Subcategoria</label>
+            <select class="form-select" id="edit-subcategory">
+              <option value="">Selecione primeiro uma categoria</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Título *</label>
+            <input type="text" class="form-input" id="edit-title" placeholder="Título do anúncio" maxlength="80">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Preço (CFA)</label>
+            <input type="text" class="form-input" id="edit-price" placeholder="Preço em CFA">
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Província *</label>
+              <select class="form-select" id="edit-province">
+                <option value="">Selecione</option>
+                <option value="Bissau">Bissau</option>
+                <option value="Bafatá">Bafatá</option>
+                <option value="Biombo">Biombo</option>
+                <option value="Bolama">Bolama</option>
+                <option value="Cacheu">Cacheu</option>
+                <option value="Gabú">Gabú</option>
+                <option value="Oio">Oio</option>
+                <option value="Quinara">Quinara</option>
+                <option value="Tombali">Tombali</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Localização *</label>
+              <input type="text" class="form-input" id="edit-location" placeholder="Localização">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Condição *</label>
+            <select class="form-select" id="edit-condition">
+              <option value="">Selecione</option>
+              <option value="Novo">Novo</option>
+              <option value="Usado">Usado</option>
+              <option value="Como novo">Como novo</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="edit-description">Descrição *</label>
+            <textarea class="form-input" id="edit-description" placeholder="Descrição do anúncio" rows="6"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="edit-image-input">Fotos (máx. 5)</label>
+            <div class="image-upload-area" id="edit-image-upload-area" role="button" tabindex="0" aria-label="Adicionar fotos ao anúncio">
+              <div class="upload-icon">📷</div>
+              <h4>Adicionar / substituir fotos</h4>
+              <p>Clique para carregar (máx. 5 fotos, JPG/PNG até 1.5MB cada)</p>
+              <input type="file" id="edit-image-input" multiple accept="image/*" style="display:none;">
+            </div>
+            <div class="image-preview-grid" id="edit-image-grid"></div>
+          </div>
+          
+          <div style="display:flex;gap:12px;">
+            <button class="btn btn-outline btn-lg" style="flex:1;" onclick="Router.navigate('dashboard')">Cancelar</button>
+            <button class="btn btn-success btn-lg" style="flex:2;" onclick="Pages.editAd.submitEdit()">✅ Salvar Alterações</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== LOGIN PAGE ========== -->
+    <div id="page-login" class="page hidden">
+      <div class="auth-page">
+        <div class="auth-container" id="login-form-container">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== REGISTER PAGE ========== -->
+    <div id="page-register" class="page hidden">
+      <div class="auth-page">
+        <div class="auth-container" id="register-form-container">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== DASHBOARD PAGE ========== -->
+    <div id="page-dashboard" class="page hidden">
+      <div class="container dashboard">
+        <div class="dashboard-header">
+          <div class="dashboard-welcome" id="dashboard-welcome">Olá, <span>Utilizador</span>! 👋</div>
+          <button class="btn btn-accent btn-lg" onclick="Router.navigate('post-ad')">➕ Novo Anúncio</button>
+        </div>
+        
+        <!-- Stats -->
+        <div class="dashboard-stats">
+          <div class="stat-card">
+            <div class="stat-icon orange">📋</div>
+            <div class="stat-info">
+              <h3 id="stat-active">0</h3>
+              <p>Anúncios Ativos</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">📊</div>
+            <div class="stat-info">
+              <h3 id="stat-total">0</h3>
+              <p>Total de Anúncios</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon blue">👁️</div>
+            <div class="stat-info">
+              <h3 id="stat-views">0</h3>
+              <p>Visualizações</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon purple">❤️</div>
+            <div class="stat-info">
+              <h3 id="stat-favorites">0</h3>
+              <p>Favoritos</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="dashboard-tabs">
+          <button class="dashboard-tab active" onclick="switchDashTab(this, 'my-ads')">📋 Meus Anúncios</button>
+          <button class="dashboard-tab" onclick="switchDashTab(this, 'my-favorites')">❤️ Favoritos</button>
+          <button class="dashboard-tab" onclick="switchDashTab(this, 'my-profile')">👤 Meu Perfil</button>
+        </div>
+        
+        <!-- My Ads Tab -->
+        <div id="dash-tab-my-ads">
+          <div class="my-listings-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Anúncio</th>
+                  <th>Preço</th>
+                  <th>Estado</th>
+                  <th>Visualizações</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="my-listings-body">
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- Favorites Tab -->
+        <div id="dash-tab-my-favorites" style="display:none;">
+          <div class="listings-grid" id="favorites-grid"></div>
+        </div>
+        
+        <!-- Profile Tab -->
+        <div id="dash-tab-my-profile" style="display:none;">
+          <div class="post-ad-form-container" style="max-width:600px;">
+            <h3 style="margin-bottom:20px;font-weight:700;">Meu Perfil</h3>
+            <div class="form-group">
+              <label class="form-label">Nome Completo</label>
+              <input type="text" class="form-input" id="profile-name" readonly>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-input" id="profile-email" readonly>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Telefone</label>
+              <input type="tel" class="form-input" id="profile-phone" readonly>
+            </div>
+            <button class="btn btn-outline" onclick="AuthController.logout()">🚪 Terminar Sessão</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== FAVORITES PAGE ========== -->
+    <div id="page-favorites" class="page hidden">
+      <div class="container" style="padding-top:30px;">
+        <div class="section-header">
+          <h2 class="section-title">Os Meus <span>Favoritos</span> ❤️</h2>
+        </div>
+        <div class="listings-grid" id="favorites-page-grid"></div>
+      </div>
+    </div>
+
+    <!-- ========== ABOUT PAGE ========== -->
+    <div id="page-about" class="page hidden">
+      <div class="container" style="padding-top:40px; max-width:800px;">
+        <div class="post-ad-form-container" style="text-align:center;">
+          <h2 style="font-size:2rem;font-weight:800;margin-bottom:16px;">Sobre a <span style="color:var(--accent);">GUINÉ-VENDAS</span></h2>
+          <p style="color:var(--text-light);line-height:1.8;margin-bottom:24px;">
+            A GUINÉ-VENDAS é a plataforma líder de anúncios classificados na Guiné-Bissau. 
+            Conectamos compradores e vendedores de todo o país, facilitando transações seguras 
+            e eficientes.
+          </p>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin:30px 0;">
+            <div>
+              <div style="font-size:2.5rem;margin-bottom:8px;">🇬🇼</div>
+              <h4 style="font-weight:700;margin-bottom:4px;">100% Guineense</h4>
+              <p style="font-size:0.85rem;color:var(--text-muted);">Feita para os guineenses</p>
+            </div>
+            <div>
+              <div style="font-size:2.5rem;margin-bottom:8px;">🆓</div>
+              <h4 style="font-weight:700;margin-bottom:4px;">Grátis</h4>
+              <p style="font-size:0.85rem;color:var(--text-muted);">Publique sem custos</p>
+            </div>
+            <div>
+              <div style="font-size:2.5rem;margin-bottom:8px;">🔒</div>
+              <h4 style="font-weight:700;margin-bottom:4px;">Seguro</h4>
+              <p style="font-size:0.85rem;color:var(--text-muted);">Transações protegidas</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== CONTACT PAGE ========== -->
+    <div id="page-contact" class="page hidden">
+      <div class="container" style="padding-top:40px; max-width:600px;">
+        <div class="post-ad-form-container">
+          <h2 style="font-size:1.8rem;font-weight:800;margin-bottom:8px;text-align:center;">Contacte-nos</h2>
+          <p style="color:var(--text-muted);text-align:center;margin-bottom:30px;">Estamos aqui para ajudar</p>
+
+          <form onsubmit="Pages.contact.submit(event)">
+          <div class="form-group">
+            <label class="form-label" for="contact-name">Nome</label>
+            <input type="text" class="form-input" id="contact-name" placeholder="O seu nome" required minlength="2">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="contact-email">Email</label>
+            <input type="email" class="form-input" id="contact-email" placeholder="seu@email.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="contact-subject">Assunto</label>
+            <select class="form-select" id="contact-subject" required>
+              <option value="">Selecione</option>
+              <option>Pergunta Geral</option>
+              <option>Problema com Anúncio</option>
+              <option>Reportar Abuso</option>
+              <option>Sugestão</option>
+              <option>Parceria</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="contact-message">Mensagem</label>
+            <textarea class="form-input" id="contact-message" rows="5" placeholder="Escreva a sua mensagem..." required minlength="10"></textarea>
+          </div>
+          <button type="submit" class="btn btn-accent btn-lg btn-block">📩 Enviar Mensagem</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== HELP PAGE ========== -->
+    <div id="page-help" class="page hidden">
+      <div class="container" style="padding-top:40px; max-width:800px;">
+        <div class="post-ad-form-container">
+          <h2 style="font-size:1.8rem;font-weight:800;margin-bottom:8px;text-align:center;">Central de Ajuda</h2>
+          <p style="color:var(--text-muted);text-align:center;margin-bottom:30px;">Encontre respostas para as perguntas mais comuns</p>
+          
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+              <h4 style="font-weight:700;margin-bottom:6px;">📝 Como publicar um anúncio?</h4>
+              <p style="color:var(--text-light);font-size:0.9rem;">Clique em "Publicar Anúncio" no menu, preencha os detalhes e publique gratuitamente.</p>
+            </div>
+            <div style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+              <h4 style="font-weight:700;margin-bottom:6px;">💰 É grátis publicar?</h4>
+              <p style="color:var(--text-light);font-size:0.9rem;">Sim! A publicação de anúncios é completamente gratuita na GUINÉ-VENDAS.</p>
+            </div>
+            <div style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+              <h4 style="font-weight:700;margin-bottom:6px;">🔒 Como me proteger?</h4>
+              <p style="color:var(--text-light);font-size:0.9rem;">Nunca faça pagamentos antecipados. Encontre o vendedor pessoalmente e verifique o produto antes de pagar.</p>
+            </div>
+            <div style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+              <h4 style="font-weight:700;margin-bottom:6px;">📞 Como contacto um vendedor?</h4>
+              <p style="color:var(--text-light);font-size:0.9rem;">Na página do anúncio, clique em "Ver Telefone" para ver o número de contacto do vendedor.</p>
+            </div>
+            <div style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+              <h4 style="font-weight:700;margin-bottom:6px;">🗑️ Como eliminar um anúncio?</h4>
+              <p style="color:var(--text-light);font-size:0.9rem;">Aceda ao seu painel de utilizador, encontre o anúncio e clique em "Eliminar".</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== TERMS PAGE ========== -->
+    <div id="page-terms" class="page hidden">
+      <div class="container" style="padding-top:40px; max-width:800px;">
+        <div class="post-ad-form-container">
+          <h2 style="font-size:1.8rem;font-weight:800;margin-bottom:16px;text-align:center;">Termos de Uso</h2>
+          <div style="color:var(--text-light);line-height:1.8;font-size:0.95rem;display:flex;flex-direction:column;gap:12px;">
+            <p>1. A publicação de anúncios na GUINÉ-VENDAS é gratuita. É proibido publicar conteúdo ilegal, fraudulento ou que viole direitos de terceiros.</p>
+            <p>2. O utilizador é responsável pela veracidade das informações do anúncio, incluindo preço, fotos e contacto.</p>
+            <p>3. Nunca faça pagamentos antecipados. A plataforma não intermedia pagamentos nem se responsabiliza por transações entre particulares.</p>
+            <p>4. Anúncios podem ser removidos em caso de denúncia comprovada, duplicação ou expiração após 30 dias.</p>
+            <p>5. Ao usar o site aceita esta política. Dúvidas: contacte-nos pela página de Contacto.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== PRIVACY PAGE ========== -->
+    <div id="page-privacy" class="page hidden">
+      <div class="container" style="padding-top:40px; max-width:800px;">
+        <div class="post-ad-form-container">
+          <h2 style="font-size:1.8rem;font-weight:800;margin-bottom:16px;text-align:center;">Política de Privacidade</h2>
+          <div style="color:var(--text-light);line-height:1.8;font-size:0.95rem;display:flex;flex-direction:column;gap:12px;">
+            <p>1. Guardamos apenas os dados necessários: nome, email, telefone e anúncios. No modo local, ficam no seu navegador (localStorage).</p>
+            <p>2. No modo cloud (Supabase), a autenticação usa Supabase Auth com sessão segura. Palavras-passe nunca são guardadas em texto claro.</p>
+            <p>3. Fotos são comprimidas no navegador (máx. 1280px, JPEG ~0.8) para proteger a sua franquia de dados. Para produção, use Supabase Storage.</p>
+            <p>4. Não partilhamos dados com terceiros. Pode pedir remoção da conta/anúncios a qualquer momento.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 404 PAGE ========== -->
+    <div id="page-404" class="page hidden">
+      <div class="container" style="padding:60px 20px;text-align:center;">
+        <div style="font-size:4rem;">🧭</div>
+        <h2 style="font-size:1.8rem;font-weight:800;margin:12px 0;">Página não encontrada</h2>
+        <p style="color:var(--text-muted);margin-bottom:24px;">O endereço que procurou não existe.</p>
+        <button class="btn btn-accent btn-lg" onclick="Router.navigate('home')">🏠 Voltar ao Início</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="footer">
+    <div class="footer-main">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <div class="logo-text">GUINÉ-<span>VENDAS</span></div>
+            <p>O maior marketplace de anúncios da Guiné-Bissau. Compre, venda e descubra tudo o que precisa na sua província.</p>
+            <div class="footer-social">
+              <a href="#" title="Facebook">📘</a>
+              <a href="#" title="WhatsApp">💬</a>
+              <a href="#" title="Instagram">📸</a>
+              <a href="#" title="YouTube">🎬</a>
+            </div>
+          </div>
+          
+          <div class="footer-col">
+            <h4>Categorias</h4>
+            <ul>
+              <li><a href="#/category/imoveis">🏠 Imóveis</a></li>
+              <li><a href="#/category/veiculos">🚗 Veículos</a></li>
+              <li><a href="#/category/eletronicos">📱 Eletrónicos</a></li>
+              <li><a href="#/category/servicos">🔧 Serviços</a></li>
+              <li><a href="#/category/emprego">💼 Emprego</a></li>
+              <li><a href="#/category/agricultura">🌾 Agricultura</a></li>
+            </ul>
+          </div>
+          
+          <div class="footer-col">
+            <h4>Links Úteis</h4>
+            <ul>
+              <li><a href="#/about">Sobre Nós</a></li>
+              <li><a href="#/contact">Contacto</a></li>
+              <li><a href="#/help">Central de Ajuda</a></li>
+              <li><a href="#/terms">Termos de Uso</a></li>
+              <li><a href="#/privacy">Política de Privacidade</a></li>
+            </ul>
+          </div>
+          
+          <div class="footer-col">
+            <h4>Contacto</h4>
+            <ul>
+              <li><a href="mailto:josimarrtx4070@gmail.com">📧 josimarrtx4070@gmail.com</a></li>
+              <li><a href="tel:+245955394566">📞 +245 955 394 566</a></li>
+              <li><a href="#">📍 Bissau, Guiné-Bissau</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <div class="container">
+        <p>© 2026 GUINÉ-VENDAS. Todos os direitos reservados. 🇬🇼</p>
+        <div class="footer-bottom-links">
+          <a href="#/about">Sobre</a>
+          <a href="#/terms">Termos</a>
+          <a href="#/privacy">Privacidade</a>
+          <a href="#/help">Ajuda</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== CONTACT MODAL ==================== -->
+  <div class="modal-overlay" id="contact-modal" onclick="if(event.target===this) closeContactModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>📞 Contacto do Vendedor</h3>
+        <div class="modal-close" onclick="closeContactModal()">✕</div>
+      </div>
+      <div class="modal-body" style="text-align:center;">
+        <p style="margin-bottom:16px;color:var(--text-light);">Para contactar o vendedor, ligue para:</p>
+        <div style="font-size:1.8rem;font-weight:900;color:var(--accent);letter-spacing:2px;margin-bottom:20px;" id="modal-phone">+245 000 000 000</div>
+        <div class="d-flex gap-2 justify-between" style="flex-wrap:wrap;">
+          <a href="#" class="btn btn-success btn-lg" style="flex:1;" onclick="window.open('tel:' + document.getElementById('modal-phone').textContent); return false;">📞 Ligar Agora</a>
+          <a href="#" class="btn btn-outline btn-lg" style="flex:1;" onclick="window.open('https://wa.me/' + document.getElementById('modal-phone').textContent.replace(/\s/g,'')); return false;">💬 WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SCRIPTS ==================== -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/app.js"></script>
+  
+  <script>
+    // ==================== PAGE-SPECIFIC LOGIC ====================
+    
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      menu.classList.toggle('hidden');
+    }
+    
+    function switchDashTab(btn, tabId) {
+      document.querySelectorAll('.dashboard-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      
+      document.getElementById('dash-tab-my-ads').style.display = tabId === 'my-ads' ? 'block' : 'none';
+      document.getElementById('dash-tab-my-favorites').style.display = tabId === 'my-favorites' ? 'block' : 'none';
+      document.getElementById('dash-tab-my-profile').style.display = tabId === 'my-profile' ? 'block' : 'none';
+      
+      if (tabId === 'my-favorites') Pages.favorites.init();
+      if (tabId === 'my-profile') {
+        const user = AppData.getUser();
+        if (user) {
+          document.getElementById('profile-name').value = user.name;
+          document.getElementById('profile-email').value = user.email || '';
+          document.getElementById('profile-phone').value = user.phone || '';
+        }
+      }
+    }
+    
+    function sortListings(sortBy) {
+      const parts = window.location.hash.replace('#/', '').split('/');
+      const page = parts[0];
+      
+      let ads = [];
+      let gridId = 'listings-grid';
+      
+      if (page === 'category') {
+        const categoryId = parts[1];
+        ads = AppData.getAdsByCategory(categoryId).filter(a => a.status === 'active');
+        gridId = 'listings-grid';
+      } else if (page === 'search') {
+        const cat = parts[1] || '';
+        const query = decodeURIComponent(parts[2] || '');
+        ads = AppData.searchAds(query, cat || null).filter(a => a.status === 'active');
+        gridId = 'search-listings-grid';
+      }
+      
+      ads = sortAds(ads, sortBy);
+      renderListings(ads, gridId);
+    }
+    
+    function sortAds(ads, sortBy) {
+      const list = [...(ads || [])];
+      switch(sortBy) {
+        case 'oldest': return list.sort((a,b) => new Date(a.date) - new Date(b.date));
+        // Mantém "Negociável" (price null) no fim em vez de desaparecer
+        case 'price-low': return list.sort((a,b) => (a.price ?? Number.MAX_SAFE_INTEGER) - (b.price ?? Number.MAX_SAFE_INTEGER));
+        case 'price-high': return list.sort((a,b) => (b.price ?? -1) - (a.price ?? -1));
+        case 'views': return list.sort((a,b) => (b.views||0) - (a.views||0));
+        default: return list.sort((a,b) => new Date(b.date) - new Date(a.date));
+      }
+    }
+    
+    function renderListings(ads, gridId) {
+      const grid = document.getElementById(gridId || 'listings-grid');
+      if (!grid) return;
+      
+      if (ads.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column:1/-1;">
+            <div class="empty-icon">🔍</div>
+            <h3>Nenhum resultado encontrado</h3>
+            <p>Tente pesquisar com termos diferentes ou explore as categorias.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      grid.innerHTML = ads.map(ad => Pages.home.renderAdCard(ad)).join('');
+    }
+    
+    function toggleFavoriteCurrentAd() {
+      const parts = (window.location.hash || '').replace('#/', '').split('/');
+      const adId = parseInt(parts[1], 10);
+      if (Number.isNaN(adId)) return;
+      toggleFavorite(adId, document.getElementById('ad-favorite-btn'));
+    }
+    
+    // Sync search bars (hero <-> header)
+    document.addEventListener('DOMContentLoaded', () => {
+      const heroSearch = document.getElementById('hero-search-input');
+      const heroCategory = document.getElementById('hero-search-category');
+      const searchInput = document.getElementById('search-input');
+      const searchCategory = document.getElementById('search-category');
+
+      const goHero = () => {
+        const query = (heroSearch?.value || '').trim() || (searchInput?.value || '').trim();
+        const cat = heroCategory?.value || searchCategory?.value || '';
+        Router.navigate(`search/${cat}/${encodeURIComponent(query)}`);
+      };
+      const heroBtn = document.querySelector('.hero-search button');
+      if (heroBtn) heroBtn.onclick = goHero;
+
+      if (heroSearch && searchInput) {
+        heroSearch.addEventListener('input', () => { searchInput.value = heroSearch.value; });
+        searchInput.addEventListener('input', () => { heroSearch.value = searchInput.value; });
+      }
+
+      if (heroCategory && searchCategory) {
+        heroCategory.addEventListener('change', () => { searchCategory.value = heroCategory.value; });
+        searchCategory.addEventListener('change', () => { heroCategory.value = searchCategory.value; });
+      }
+    });
+  </script>
+
+</body>
+</html>
