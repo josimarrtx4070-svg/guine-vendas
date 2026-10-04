@@ -101,7 +101,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6...';
 ---
 
 ## 💬 LOGIN/REGISTO VIA WHATSAPP (código de 6 dígitos)
-
 O site tem abas **Email | WhatsApp** no login e no registo. O fluxo: número → código de 6 dígitos no WhatsApp (válido 5 min) → conta criada ou sessão iniciada. Sem palavra-passe.
 
 ### Modo demo (já funciona, sem configurar nada)
@@ -125,6 +124,36 @@ const WHATSAPP_API_KEY = 'apikey-da-instancia';
 
 ### Segurança do OTP
 - Só o hash SHA-256 do código é guardado (nunca o código), expiração de 5 min, máx. 5 tentativas e rate-limit de 3 pedidos/min por número.
+
+---
+
+## 📱 APP ANDROID (Google Play via TWA)
+
+O site já é PWA (`manifest.webmanifest` + `sw.js` + ícones). O app Android é gerado por **TWA** com [Bubblewrap](https://github.com/GoogleChromeLabs/bubblewrap) — sem reescrever código.
+
+### 1. Publicar o PWA primeiro
+Suba esta versão para a Cloudflare (git push) e confirme:
+- `https://guine-vendas.pages.dev/manifest.webmanifest` abre o JSON
+- `https://guine-vendas.pages.dev/.well-known/assetlinks.json` abre o JSON **sem placeholder** (preencha o SHA-256 abaixo antes!)
+
+### 2. Gerar o app (no seu PC: Node 18+ + JDK 17)
+```bash
+npm i -g @bubblewrap/cli
+bubblewrap init --manifest https://guine-vendas.pages.dev/manifest.webmanifest
+# Package: gw.guinevendas.app | Nome: GUINÉ-VENDAS | Cor: #F78302
+bubblewrap build
+```
+O `build` gera a **keystore** (guarde o ficheiro `.keystore` + senhas — sem ele não há updates!) e mostra o **SHA-256 fingerprint**.
+
+### 3. Ligar site ↔ app (obrigatório, senão abre no browser)
+1. Cole o SHA-256 em `.well-known/assetlinks.json` (trocar o placeholder)
+2. `git push` + Purge cache na Cloudflare
+3. Valide: `bubblewrap doctor` ou teste o `.apk` no telemóvel
+
+### 4. Google Play ($25 únicos)
+- Conta em `play.google.com/console` → Create app → upload do `.aab` de `bubblewrap build`
+- **Data safety**: declarar email + telefone (Supabase Auth) e fotos dos anúncios
+- Preencha loja (descrição PT, screenshots, ícone 512, feature graphic) → revisão (~2-7 dias)
 
 ---
 

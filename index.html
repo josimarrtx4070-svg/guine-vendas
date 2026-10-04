@@ -17,6 +17,13 @@
   <meta name="twitter:title" content="GUINÉ-VENDAS - Marketplace da Guiné-Bissau">
   <meta name="twitter:description" content="Compre, venda e descubra oportunidades em todo o país.">
   <title>GUINÉ-VENDAS - Marketplace da Guiné-Bissau</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="theme-color" content="#F78302">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="GUINÉ-VENDAS">
+  <link rel="apple-touch-icon" href="./images/apple-touch-icon.png">
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>">
 </head>
@@ -886,6 +893,14 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/app.js"></script>
+  <script>
+    // PWA: regista o Service Worker (ignora em file://)
+    if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
   
   <script>
     // ==================== PAGE-SPECIFIC LOGIC ====================

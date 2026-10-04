@@ -1,0 +1,30 @@
+{
+  "name": "GUINÉ-VENDAS - Marketplace da Guiné-Bissau",
+  "short_name": "GUINÉ-VENDAS",
+  "description": "Compre, venda e descubra oportunidades em toda a Guiné-Bissau.",
+  "lang": "pt-CV",
+  "start_url": "./index.html#/",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5F5F6",
+  "theme_color": "#F78302",
+  "icons": [
+    {
+      "src": "./images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "./images/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
