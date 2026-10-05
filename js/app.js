@@ -1631,6 +1631,7 @@ const Pages = {
       document.getElementById('stat-favorites').textContent = AppData.getFavorites().length;
       
       this.renderListings(userAds);
+      this.fillProfile();
     },
 
     renderListings(ads) {
@@ -1690,6 +1691,64 @@ const Pages = {
     getStatusLabel(status) {
       const labels = { active: 'Ativo', pending: 'Pendente', expired: 'Expirado', sold: 'Vendido' };
       return labels[status] || status;
+    },
+
+    fillProfile() {
+      const user = AppData.getUser();
+      if (!user) return;
+      const n = document.getElementById('profile-name');
+      const e = document.getElementById('profile-email');
+      const p = document.getElementById('profile-phone');
+      if (n) n.value = user.name || '';
+      if (e) e.value = user.email || '';
+      if (p) p.value = user.phone || '';
+    },
+
+    async saveProfile(e) {
+      if (e) e.preventDefault();
+      const user = AppData.getUser();
+      if (!user) {
+        Toast.show('Precisa de estar logado.', 'warning');
+        Router.navigate('login');
+        return;
+      }
+      const name = document.getElementById('profile-name').value.trim();
+      const phone = document.getElementById('profile-phone').value.trim();
+      if (name.length < 2) {
+        Toast.show('O nome deve ter pelo menos 2 caracteres.', 'warning');
+        return;
+      }
+      if (!isValidPhone(phone)) {
+        Toast.show('Insira um telefone válido da Guiné-Bissau (ex.: +245 955 394 566).', 'warning');
+        return;
+      }
+      const normPhone = normalizePhone(phone);
+
+      if (AppData.isCloud) {
+        try {
+          const { error } = await supabaseClient.from('profiles').update({
+            full_name: name,
+            phone: normPhone
+          }).eq('id', user.id);
+          if (error) throw error;
+        } catch (err) {
+          Toast.show('Erro ao salvar. Tente de novo.', 'error');
+          return;
+        }
+      } else {
+        try {
+          const users = JSON.parse(localStorage.getItem('gv_users') || '[]');
+          const u = users.find(x => String(x.id) === String(user.id));
+          if (u) {
+            u.name = name;
+            u.phone = normPhone;
+            localStorage.setItem('gv_users', JSON.stringify(users));
+          }
+        } catch (err) { /* ignore */ }
+      }
+      AppData.setUser({ ...user, name, phone: normPhone });
+      document.getElementById('dashboard-welcome').innerHTML = `Olá, <span>${esc(name)}</span>! 👋`;
+      Toast.show('Perfil atualizado! ✅', 'success');
     }
   },
 

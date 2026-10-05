@@ -635,19 +635,24 @@
         <div id="dash-tab-my-profile" style="display:none;">
           <div class="post-ad-form-container" style="max-width:600px;">
             <h3 style="margin-bottom:20px;font-weight:700;">Meu Perfil</h3>
-            <div class="form-group">
-              <label class="form-label">Nome Completo</label>
-              <input type="text" class="form-input" id="profile-name" readonly>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Email</label>
-              <input type="email" class="form-input" id="profile-email" readonly>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Telefone</label>
-              <input type="tel" class="form-input" id="profile-phone" readonly>
-            </div>
-            <button class="btn btn-outline" onclick="AuthController.logout()">🚪 Terminar Sessão</button>
+            <form onsubmit="Pages.dashboard.saveProfile(event)">
+              <div class="form-group">
+                <label class="form-label" for="profile-name">Nome Completo *</label>
+                <input type="text" class="form-input" id="profile-name" required minlength="2" autocomplete="name">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="profile-email">Email (não editável)</label>
+                <input type="email" class="form-input" id="profile-email" readonly>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="profile-phone">Telefone *</label>
+                <input type="tel" class="form-input" id="profile-phone" placeholder="+245 955 394 566" required autocomplete="tel">
+              </div>
+              <div class="d-flex gap-2" style="flex-wrap:wrap;">
+                <button type="submit" class="btn btn-accent" style="flex:1;">💾 Salvar Alterações</button>
+                <button type="button" class="btn btn-outline" onclick="AuthController.logout()">🚪 Terminar Sessão</button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
@@ -919,14 +924,7 @@
       document.getElementById('dash-tab-my-profile').style.display = tabId === 'my-profile' ? 'block' : 'none';
       
       if (tabId === 'my-favorites') Pages.favorites.init();
-      if (tabId === 'my-profile') {
-        const user = AppData.getUser();
-        if (user) {
-          document.getElementById('profile-name').value = user.name;
-          document.getElementById('profile-email').value = user.email || '';
-          document.getElementById('profile-phone').value = user.phone || '';
-        }
-      }
+      if (tabId === 'my-profile') Pages.dashboard.fillProfile();
     }
     
     function sortListings(sortBy) {
