@@ -833,13 +833,14 @@ const Pages = {
     renderAdCard(ad) {
       const isFav = AppData.isFavorite(ad.id);
       const category = AppData.categories.find(c => c.id === ad.category);
+      const cover = ad.images && ad.images.length ? safeImg(ad.images[0]) : '';
       
       return `
         <div class="listing-card" role="button" tabindex="0" aria-label="Ver anúncio: ${esc(ad.title)}" onclick="Router.navigate('ad/${ad.id}')" onkeydown="if(event.key==='Enter'){Router.navigate('ad/${ad.id}')}">
           <div class="listing-image">
-            <div style="width:100%;height:100%;background:linear-gradient(135deg,#f5f5f5,#e0e0e0);display:flex;align-items:center;justify-content:center;font-size:3rem;" aria-hidden="true">
-              ${category ? category.icon : '📦'}
-            </div>
+            ${cover
+              ? `<img src="${esc(cover)}" alt="${esc(ad.title)}" loading="lazy" onerror="this.remove()">`
+              : `<div style="width:100%;height:100%;background:linear-gradient(135deg,#f5f5f5,#e0e0e0);display:flex;align-items:center;justify-content:center;font-size:3rem;" aria-hidden="true">${category ? category.icon : '📦'}</div>`}
             ${ad.featured ? '<span class="listing-badge badge-featured">⭐ Destaque</span>' : ''}
             ${ad.status === 'sold' ? '<span class="listing-badge badge-urgent" style="left:auto;right:10px;">Vendido</span>' : ''}
             <div class="listing-favorite ${isFav ? 'active' : ''}" role="button" tabindex="0" aria-label="${isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}" aria-pressed="${isFav ? 'true' : 'false'}" onclick="event.stopPropagation(); toggleFavorite(${ad.id}, this)" onkeydown="event.stopPropagation(); if(event.key==='Enter'){toggleFavorite(${ad.id}, this)}">
@@ -1653,12 +1654,16 @@ const Pages = {
         const category = AppData.categories.find(c => c.id === ad.category);
         const user = AppData.getUser();
         const isOwner = isOwnerOf(ad, user);
+        const cover = ad.images && ad.images.length ? safeImg(ad.images[0]) : '';
+        const thumb = cover
+          ? `<div class="listing-thumb" style="padding:0;overflow:hidden;"><img src="${esc(cover)}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.remove()"></div>`
+          : `<div class="listing-thumb">${category ? category.icon : '📦'}</div>`;
         
         return `
           <tr>
             <td>
               <div style="display:flex;align-items:center;gap:12px;">
-                <div class="listing-thumb">${category ? category.icon : '📦'}</div>
+                ${thumb}
                 <div>
                   <div style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(ad.title)}</div>
                   <div style="font-size:0.8rem;color:var(--text-muted);">${AppData.formatDate(ad.date)}</div>
