@@ -1,6 +1,9 @@
 # Evita JS/CSS antigos após cada deploy (stale cache).
 # O HTML nunca é cacheado; JS/CSS por 5 minutos.
+# assetlinks.json NUNCA em cache (o Android valida na instalação).
 /index.html
+  Cache-Control: no-store
+/.well-known/assetlinks.json
   Cache-Control: no-store
 /*.js
   Cache-Control: public, max-age=300
