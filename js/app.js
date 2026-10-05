@@ -654,11 +654,14 @@ const Router = {
 
   handleRoute() {
     const hash = window.location.hash || '#/';
+    const search = window.location.search || '';
 
     // Retorno de OAuth/magic link do Supabase (Google, Facebook):
-    // #access_token=...&refresh_token=...
-    if (hash.includes('access_token=') && hash.includes('refresh_token=')) {
-      this.handleAuthCallback(hash);
+    // #access_token=... | ?code=... (PKCE) | ?error=... / #error=...
+    if ((hash.includes('access_token=') && hash.includes('refresh_token=')) ||
+        search.includes('code=') || search.includes('error=') ||
+        hash.includes('error=')) {
+      this.handleAuthCallback(hash, search);
       return;
     }
 
@@ -712,29 +715,60 @@ const Router = {
     window.location.hash = `/${path}`;
   },
 
-  // Consome os tokens do magic link e cria a sessão local
-  async handleAuthCallback(hash) {
+  // Consome o retorno OAuth (tokens, ?code PKCE ou erro) e cria a sessão local
+  async handleAuthCallback(hash, search) {
+    search = search || window.location.search || '';
+    const cleanUrl = () => {
+      try { window.history.replaceState(null, '', window.location.pathname + '#/'); } catch (e) { /* ignore */ }
+    };
+    const fail = (msg) => {
+      cleanUrl();
+      Toast.show(msg || 'Não foi possível concluir o login. Tente de novo.', 'error');
+      this.navigate('login');
+    };
+    const welcome = async () => {
+      await AppData.enterSession();
+      const u = AppData.getUser();
+      if (!u) return false;
+      cleanUrl();
+      Toast.show(`Bem-vindo, ${esc(u.name)}! 👋`, 'success');
+      this.navigate('dashboard');
+      return true;
+    };
     try {
-      const p = new URLSearchParams(hash.replace(/^#/, ''));
+      if (!AppData.isCloud) { this.navigate('login'); return; }
+      // Erro devolvido pelo provider/Supabase: mostra o motivo real
+      const errHit = hash.match(/error_description=([^&]*)/) || search.match(/error_description=([^&]*)/);
+      const hasErr = /[?#&]error=/.test(hash) || /[?#&]error=/.test(search);
+      if (hasErr) {
+        const desc = errHit ? decodeURIComponent(errHit[1]).replace(/\+/g, ' ') : '';
+        fail(desc || 'Login cancelado ou negado pelo provider. Tente de novo.');
+        return;
+      }
+      // 1) Sessão já detetada automaticamente pelo supabase-js?
+      try {
+        const sess = await supabaseClient.auth.getSession();
+        if (sess && sess.data && sess.data.session && await welcome()) return;
+      } catch (e) { /* tenta setSession abaixo */ }
+      // 2) Tokens no hash?
+      const p = new URLSearchParams(hash.replace(/^#\/?/, ''));
       const access_token = p.get('access_token');
       const refresh_token = p.get('refresh_token');
-      if (access_token && refresh_token && AppData.isCloud) {
-        const { error } = await supabaseClient.auth.setSession({ access_token, refresh_token });
-        if (!error) {
-          await AppData.enterSession();
-          const u = AppData.getUser();
-          if (u) {
-            Toast.show(`Bem-vindo, ${esc(u.name)}! 👋`, 'success');
-            this.navigate('dashboard');
-            return;
-          }
-        }
+      if (access_token && refresh_token) {
+        const res = await supabaseClient.auth.setSession({ access_token, refresh_token });
+        if (!res.error && await welcome()) return;
       }
-      Toast.show('Não foi possível concluir o login. Tente de novo.', 'error');
-      this.navigate('login');
+      // 3) ?code= (PKCE): dá tempo à deteção automática e revalida
+      if (search.includes('code=')) {
+        await new Promise((r) => setTimeout(r, 2500));
+        try {
+          const sess2 = await supabaseClient.auth.getSession();
+          if (sess2 && sess2.data && sess2.data.session && await welcome()) return;
+        } catch (e) { /* cai no fail */ }
+      }
+      fail();
     } catch (e) {
-      Toast.show('Não foi possível concluir o login. Tente de novo.', 'error');
-      this.navigate('login');
+      fail();
     }
   },
 
