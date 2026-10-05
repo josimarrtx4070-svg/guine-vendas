@@ -1929,6 +1929,10 @@ textarea.form-input {
   .ad-detail-grid {
     grid-template-columns: 1fr;
   }
+
+  .ad-main-image {
+    height: 320px;
+  }
   
   .footer-grid {
     grid-template-columns: 1fr 1fr;
@@ -1989,6 +1993,23 @@ textarea.form-input {
   .listing-image {
     height: 150px;
   }
+
+  .ad-main-image {
+    height: 260px;
+  }
+
+  .ad-content {
+    padding: 20px;
+  }
+
+  .section-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+  }
   
   .footer-grid {
     grid-template-columns: 1fr;
@@ -2024,6 +2045,33 @@ textarea.form-input {
 }
 
 @media (max-width: 480px) {
+  .search-bar {
+    flex-wrap: wrap;
+  }
+
+  .search-bar input {
+    flex: 1 1 100%;
+    border-right: 2px solid var(--border);
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+
+  .search-bar select {
+    flex: 1;
+    max-width: none;
+    border-left: 2px solid var(--border);
+    border-top: none;
+  }
+
+  .search-bar button {
+    flex: 1;
+    border-radius: 0 0 var(--radius) 0;
+    justify-content: center;
+  }
+
+  .stat-card {
+    flex-wrap: wrap;
+  }
+
   .categories-grid {
     grid-template-columns: repeat(2, 1fr);
   }
