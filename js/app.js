@@ -1097,6 +1097,27 @@ const Pages = {
       } else {
         showContactModal(phone);
       }
+    },
+
+    // Botão principal "Contactar Vendedor": sem login pede login;
+    // com login rola até o cartão do vendedor e abre o telefone.
+    contactSellerPrimary() {
+      const user = AppData.getUser();
+      if (!user) {
+        Toast.show('Inicie sessão para ver o contacto do vendedor.', 'warning');
+        Router.navigate('login');
+        return;
+      }
+      const card = document.getElementById('seller-contact');
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.style.boxShadow = 'var(--shadow-xl)';
+        setTimeout(() => { card.style.boxShadow = ''; }, 1600);
+      }
+      const phoneEl = document.getElementById('seller-phone');
+      if (phoneEl && phoneEl.textContent.trim()) {
+        setTimeout(() => showContactModal(phoneEl.textContent.trim()), 600);
+      }
     }
   },
 
