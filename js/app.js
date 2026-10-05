@@ -1956,7 +1956,9 @@ const AuthController = {
       return;
     }
     try {
-      const redirectTo = window.location.origin + window.location.pathname + '#/';
+      // Sem '#/' no fim: o Supabase anexa ?code= ou #tokens; com
+      // fragmento no redirectTo alguns fluxos quebravam o retorno.
+      const redirectTo = window.location.origin + window.location.pathname;
       const { error } = await supabaseClient.auth.signInWithOAuth({
         provider,
         options: { redirectTo }
