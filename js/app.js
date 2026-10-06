@@ -1512,29 +1512,27 @@ const Pages = {
       }
     },
 
-    // Injeta botões só dos providers ativos (silencioso se nenhum)
+    // Injeta o botão Google (só Google; só em cloud com provider ativo)
     async renderOAuth(elId) {
       const el = document.getElementById(elId);
       if (!el) return;
       const active = await this.activeOAuthProviders();
-      if (!active.length) return;
-      const btns = {
-        google: `
-          <button type="button" class="btn btn-outline btn-lg btn-block" onclick="AuthController.oauth('google')" aria-label="Continuar com Google">
-            <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C36.9 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
-            Continuar com Google
-          </button>`,
-        facebook: `
-          <button type="button" class="btn btn-lg btn-block" style="background:#1877F2;color:#fff;" onclick="AuthController.oauth('facebook')" aria-label="Continuar com Facebook">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M13.5 21v-7h2.4l.4-3h-2.8V9.1c0-.9.3-1.5 1.6-1.5h1.3V4.9c-.3 0-1.1-.1-2-.1-2 0-3.4 1.2-3.4 3.5V11H8.5v3H11v7h2.5z"/></svg>
-            Continuar com Facebook
-          </button>`
-      };
+      if (!AppData.isCloud || !active.includes('google')) return;
       el.innerHTML = `
         <div class="form-divider"><span>ou</span></div>
         <div style="display:flex;flex-direction:column;gap:10px;">
-          ${active.map(p => btns[p]).join('')}
+          <button type="button" class="btn btn-outline btn-lg btn-block" onclick="AuthController.oauth('google')" aria-label="Continuar com Google">
+            <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C36.9 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+            Continuar com Google
+          </button>
         </div>`;
+      // Modo cloud = só Google: oculta o formulário de email
+      const form = el.parentElement ? el.parentElement.querySelector('form') : null;
+      if (form) form.style.display = 'none';
+      const note = document.createElement('p');
+      note.className = 'form-footer';
+      note.textContent = 'Entre com a sua conta Google para continuar.';
+      el.after(note);
     },
 
     showLogin() {
@@ -1561,27 +1559,7 @@ const Pages = {
           Não tem conta? <a href="#/register" onclick="Router.navigate('register')">Registar agora</a>
         </div>
       `;
-      this.renderPendingEmailNotice(c);
       this.renderOAuth('oauth-login');
-    },
-
-    // Aviso persistente de confirmação de email (fica até confirmar)
-    renderPendingEmailNotice(container) {
-      let pending = null;
-      try { pending = sessionStorage.getItem('gv_pending_email'); } catch (e) { /* ignore */ }
-      if (!pending || !container) return;
-      const header = container.querySelector('.auth-header');
-      if (!header || container.querySelector('#pending-email-notice')) return;
-      const box = document.createElement('div');
-      box.id = 'pending-email-notice';
-      box.setAttribute('role', 'status');
-      box.innerHTML = `
-        <div style="margin:0 0 20px;padding:14px 16px;border:2px solid var(--accent);border-radius:var(--radius);background:var(--accent-light);font-size:0.9rem;line-height:1.6;">
-          <div style="font-weight:800;margin-bottom:4px;">📧 Confirme o seu email</div>
-          <div style="color:var(--text-light);">Enviámos um link para <strong>${esc(pending)}</strong>. Abra o email (verifique também o spam) e clique no link antes de entrar.</div>
-          <button type="button" class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="AuthController.resendEmail()">↻ Reenviar email</button>
-        </div>`;
-      header.after(box);
     },
 
     showRegister() {
@@ -1854,18 +1832,9 @@ const AuthController = {
     if (AppData.isCloud) {
       const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (error || !data || !data.session) {
-        const code = error && error.code ? String(error.code) : '';
-        const msg = error && error.message ? String(error.message) : '';
-        if (code === 'email_not_confirmed' || /confirm|verif/i.test(msg)) {
-          try { sessionStorage.setItem('gv_pending_email', email); } catch (e) { /* ignore */ }
-          Toast.show('Falta confirmar o seu email. Verifique a caixa de entrada e o spam.', 'warning');
-          try { Pages.auth.showLogin(); } catch (e) { /* ignore */ }
-          return;
-        }
         Toast.show('Email ou palavra-passe incorretos.', 'error');
         return;
       }
-      try { sessionStorage.removeItem('gv_pending_email'); } catch (e) { /* ignore */ }
       await AppData.enterSession();
       const u = AppData.getUser();
       Toast.show(`Bem-vindo de volta, ${u ? esc(u.name) : ''}! 👋`, 'success');
@@ -1902,27 +1871,6 @@ const AuthController = {
     } else {
       Toast.show('Email ou palavra-passe incorretos.', 'error');
     }
-  },
-
-  // Reenvia o email de confirmação (modo cloud)
-  async resendEmail() {
-    if (!AppData.isCloud) return;
-    let email = '';
-    try { email = sessionStorage.getItem('gv_pending_email') || ''; } catch (e) { /* ignore */ }
-    if (!email) {
-      Toast.show('Registe-se primeiro para receber o email.', 'warning');
-      return;
-    }
-    if (!RateLimit.check('resend-' + email, 3, 60000)) {
-      Toast.show('Aguarde 1 minuto antes de reenviar.', 'warning');
-      return;
-    }
-    const { error } = await supabaseClient.auth.resend({ type: 'signup', email });
-    if (error) {
-      Toast.show('Não foi possível reenviar. Tente mais tarde.', 'error');
-      return;
-    }
-    Toast.show(`Email reenviado para ${email}! 📧 Verifique a caixa de entrada e o spam.`, 'success');
   },
 
   async register(e) {
@@ -1977,12 +1925,10 @@ const AuthController = {
       }
       // Se o Supabase devolveu sessão na hora (email não confirmado), entra já.
       if (data && data.session) {
-        try { sessionStorage.removeItem('gv_pending_email'); } catch (e) { /* ignore */ }
         await AppData.enterSession();
         Toast.show('Conta criada com sucesso! 🎉', 'success');
         Router.navigate('dashboard');
       } else {
-        try { sessionStorage.setItem('gv_pending_email', email); } catch (e) { /* ignore */ }
         Toast.show('Conta criada! Verifique o seu email para ativar a conta.', 'info');
         Router.navigate('login');
       }
